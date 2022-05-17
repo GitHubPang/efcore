@@ -83,6 +83,11 @@ public class FromSqlParameterExpandingExpressionVisitor : ExpressionVisitor
     {
         if (expression is not FromSqlExpression fromSql)
         {
+            if (expression is DeleteExpression deleteExpression)
+            {
+                return deleteExpression.Update(deleteExpression.Table, (SelectExpression)Visit(deleteExpression.SelectExpression));
+            }
+
             return base.Visit(expression);
         }
 

@@ -62,6 +62,13 @@ public class SqliteQueryTranslationPostprocessor : RelationalQueryTranslationPos
                 throw new InvalidOperationException(SqliteStrings.ApplyNotSupported);
             }
 
+            if (extensionExpression is NonQueryExpression nonQueryExpression                )
+            {
+                Visit(nonQueryExpression.DeleteExpression.SelectExpression);
+
+                return nonQueryExpression;
+            }
+
             return base.VisitExtension(extensionExpression);
         }
     }

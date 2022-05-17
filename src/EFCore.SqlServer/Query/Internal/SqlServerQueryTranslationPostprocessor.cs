@@ -73,6 +73,9 @@ public class SqlServerQueryTranslationPostprocessor : RelationalQueryTranslation
                 && selectExpression.Orderings.Count == 0:
                     throw new InvalidOperationException(SqlServerStrings.SplitQueryOffsetWithoutOrderBy);
 
+                case NonQueryExpression nonQueryExpression:
+                    Visit(nonQueryExpression.DeleteExpression.SelectExpression);
+                    return nonQueryExpression;
 
                 default:
                     return base.Visit(expression);

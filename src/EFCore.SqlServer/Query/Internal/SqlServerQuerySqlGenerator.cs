@@ -35,6 +35,41 @@ public class SqlServerQuerySqlGenerator : QuerySqlGenerator
     ///     any release. You should only use it directly in your code with extreme caution and knowing that
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
+    protected override Expression VisitDelete(DeleteExpression deleteExpression)
+    {
+        Sql.Append($"DELETE FROM {Dependencies.SqlGenerationHelper.DelimitIdentifier(deleteExpression.Table.Alias)}");
+
+        var selectExpression = deleteExpression.SelectExpression;
+
+        if (selectExpression.Offset == null
+            && selectExpression.Limit == null
+            && !selectExpression.IsDistinct
+            && selectExpression.Having == null
+            && selectExpression.Orderings.Count == 0
+            && selectExpression.GroupBy.Count == 0
+            && selectExpression.Tables.Count == 1
+            && selectExpression.Tables[0] == deleteExpression.Table
+            && selectExpression.Projection.Count == 0)
+        {
+            Sql.AppendLine().Append("FROM ");
+            Visit(selectExpression.Tables[0]);
+            Sql.AppendLine().Append("WHERE ");
+            Visit(selectExpression.Predicate);
+        }
+        else
+        {
+            throw new NotSupportedException();
+        }
+
+        return deleteExpression;
+    }
+
+    /// <summary>
+    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
+    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
+    ///     any release. You should only use it directly in your code with extreme caution and knowing that
+    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
+    /// </summary>
     protected override void GenerateTop(SelectExpression selectExpression)
     {
         if (selectExpression.Limit != null

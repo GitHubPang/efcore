@@ -92,6 +92,11 @@ public class SkipTakeCollapsingExpressionVisitor : ExpressionVisitor
             }
         }
 
+        if (extensionExpression is DeleteExpression deleteExpression)
+        {
+            return deleteExpression.Update(deleteExpression.Table, (SelectExpression)Visit(deleteExpression.SelectExpression));
+        }
+
         return base.VisitExtension(extensionExpression);
     }
 }

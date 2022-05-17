@@ -62,22 +62,27 @@ public class RelationalQueryTranslationPostprocessor : QueryTranslationPostproce
         [return: NotNullIfNotNull("expression")]
         public override Expression? Visit(Expression? expression)
         {
-            if (expression is SelectExpression selectExpression)
+            switch (expression)
             {
-                if (selectExpression.IsMutable())
-                {
+                case SelectExpression selectExpression
+                when selectExpression.IsMutable():
                     throw new InvalidDataException(selectExpression.Print());
-                }
+
+                case ShapedQueryExpression shapedQueryExpression:
+                    Visit(shapedQueryExpression.QueryExpression);
+                    return shapedQueryExpression;
+
+                case NonQueryExpression nonQueryExpression:
+                    Visit(nonQueryExpression.DeleteExpression);
+                    return nonQueryExpression;
+
+                case DeleteExpression deleteExpression:
+                    Visit(deleteExpression.SelectExpression);
+                    return deleteExpression;
+
+                default:
+                    return base.Visit(expression);
             }
-
-            if (expression is ShapedQueryExpression shapedQueryExpression)
-            {
-                Visit(shapedQueryExpression.QueryExpression);
-
-                return shapedQueryExpression;
-            }
-
-            return base.Visit(expression);
         }
     }
 
@@ -93,22 +98,26 @@ public class RelationalQueryTranslationPostprocessor : QueryTranslationPostproce
             switch (expression)
             {
                 case ShapedQueryExpression shapedQueryExpression:
-                    UniquifyAliasInSelectExpression(shapedQueryExpression.QueryExpression);
+                    VerifyUniqueAliasInExpression(shapedQueryExpression.QueryExpression);
                     Visit(shapedQueryExpression.QueryExpression);
                     return shapedQueryExpression;
 
                 case RelationalSplitCollectionShaperExpression relationalSplitCollectionShaperExpression:
-                    UniquifyAliasInSelectExpression(relationalSplitCollectionShaperExpression.SelectExpression);
+                    VerifyUniqueAliasInExpression(relationalSplitCollectionShaperExpression.SelectExpression);
                     Visit(relationalSplitCollectionShaperExpression.InnerShaper);
                     return relationalSplitCollectionShaperExpression;
+
+                case NonQueryExpression nonQueryExpression:
+                    VerifyUniqueAliasInExpression(nonQueryExpression.DeleteExpression);
+                    return nonQueryExpression;
 
                 default:
                     return base.Visit(expression);
             }
         }
 
-        private void UniquifyAliasInSelectExpression(Expression selectExpression)
-            => _scopedVisitor.EntryPoint(selectExpression);
+        private void VerifyUniqueAliasInExpression(Expression expression)
+            => _scopedVisitor.EntryPoint(expression);
 
         private sealed class ScopedVisitor : ExpressionVisitor
         {
@@ -150,6 +159,14 @@ public class RelationalQueryTranslationPostprocessor : QueryTranslationPostproce
             [return: NotNullIfNotNull("expression")]
             public override Expression? Visit(Expression? expression)
             {
+                if (expression is DeleteExpression deleteExpression)
+                {
+                    Visit(deleteExpression.Table);
+                    Visit(deleteExpression.SelectExpression);
+
+                    return deleteExpression;
+                }
+
                 var visitedExpression = base.Visit(expression);
                 if (visitedExpression is TableExpressionBase tableExpressionBase
                     && !_visitedTableExpressionBases.Contains(tableExpressionBase)
