@@ -611,7 +611,7 @@ public class RelationalModel : Annotatable, IRelationalModel
         }
 
         Check.DebugAssert(definingType is not null, $"Could not find defining type for {entityType}");
-
+        
         var mappedType = entityType;
         while (mappedType != null)
         {

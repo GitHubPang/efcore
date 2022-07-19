@@ -1,10 +1,12 @@
 // Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
+using System.Data;
 using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Text;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
+using IColumnMapping = Microsoft.EntityFrameworkCore.Metadata.IColumnMapping;
 
 // ReSharper disable once CheckNamespace
 namespace Microsoft.EntityFrameworkCore;
@@ -1099,6 +1101,44 @@ public static class RelationalPropertyExtensions
 
         return optional ?? (entityType.BaseType != null && entityType.FindDiscriminatorProperty() != null);
     }
+
+    /// <summary>
+    ///     Gets the direction of the corresponding stored procedure parameter.
+    /// </summary>
+    /// <param name="property">The property.</param>
+    /// <param name="storeObject">The identifier of the stored procedure containing the parameter.</param>
+    /// <returns>
+    ///     The direction of the corresponding stored procedure parameter.
+    /// </returns>
+    public static ParameterDirection GetDirection(this IReadOnlyProperty property, in StoreObjectIdentifier storeObject)
+        => property.FindOverrides(storeObject)?.Direction ?? ParameterDirection.Input;
+
+    /// <summary>
+    ///     Sets the direction of the corresponding stored procedure parameter.
+    /// </summary>
+    /// <param name="property">The property.</param>
+    /// <param name="direction">The direction to set.</param>
+    /// <param name="storeObject">The identifier of the stored procedure containing the parameter.</param>
+    public static void SetDirection(
+        this IMutableProperty property,
+        ParameterDirection direction,
+        in StoreObjectIdentifier storeObject)
+        => property.GetOrCreateOverrides(storeObject).Direction = direction;
+
+    /// <summary>
+    ///     Sets the direction of the corresponding stored procedure parameter.
+    /// </summary>
+    /// <param name="property">The property.</param>
+    /// <param name="direction">The direction to set.</param>
+    /// <param name="storeObject">The identifier of the stored procedure containing the parameter.</param>
+    /// <param name="fromDataAnnotation">Indicates whether the configuration was specified using a data annotation.</param>
+    /// <returns>The configured value.</returns>
+    public static ParameterDirection? SetDirection(
+        this IConventionProperty property,
+        ParameterDirection direction,
+        in StoreObjectIdentifier storeObject,
+        bool fromDataAnnotation = false)
+        => property.GetOrCreateOverrides(storeObject, fromDataAnnotation).SetDirection(direction, fromDataAnnotation);
 
     /// <summary>
     ///     Returns the comment for the column this property is mapped to.

@@ -1,6 +1,7 @@
 ﻿// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
+using System.Data;
 using Microsoft.EntityFrameworkCore.Internal;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 
@@ -365,13 +366,38 @@ public class RelationalModelValidator : ModelValidator
                         parameter, entityType.DisplayName(), storeObjectIdentifier.DisplayName()));
             }
 
-            if (storeObjectIdentifier.StoreObjectType == StoreObjectType.DeleteStoredProcedure
-                && !property.IsPrimaryKey()
-                && !property.IsConcurrencyToken)
+            switch (storeObjectIdentifier.StoreObjectType)
             {
-                throw new InvalidOperationException(
-                    RelationalStrings.StoredProcedureDeleteNonKeyProperty(
-                        entityType.DisplayName(), parameter, storeObjectIdentifier.DisplayName()));
+                case StoreObjectType.InsertStoredProcedure:
+                    if (property.GetDirection(storeObjectIdentifier) != ParameterDirection.Input
+                        && (property.ValueGenerated & ValueGenerated.OnAdd) == 0)
+                    {
+                        throw new InvalidOperationException(
+                            RelationalStrings.StoredProcedureOutputParameterNotGenerated(
+                                entityType.DisplayName(), parameter, storeObjectIdentifier.DisplayName()));
+                    }
+
+                    break;
+                case StoreObjectType.DeleteStoredProcedure:
+                    if (!property.IsPrimaryKey()
+                        && !property.IsConcurrencyToken)
+                    {
+                        throw new InvalidOperationException(
+                            RelationalStrings.StoredProcedureDeleteNonKeyProperty(
+                                entityType.DisplayName(), parameter, storeObjectIdentifier.DisplayName()));
+                    }
+                    
+                    break;
+                case StoreObjectType.UpdateStoredProcedure:
+                    if (property.GetDirection(storeObjectIdentifier) != ParameterDirection.Input
+                        && (property.ValueGenerated & ValueGenerated.OnUpdate) == 0)
+                    {
+                        throw new InvalidOperationException(
+                            RelationalStrings.StoredProcedureOutputParameterNotGenerated(
+                                entityType.DisplayName(), parameter, storeObjectIdentifier.DisplayName()));
+                    }
+
+                    break;
             }
         }
 

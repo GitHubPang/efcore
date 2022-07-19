@@ -1254,6 +1254,14 @@ namespace Microsoft.EntityFrameworkCore.Diagnostics
                 entityType, sproc);
 
         /// <summary>
+        ///     The property '{entityType}.{property}' is mapped to an output parameter of the stored procedure '{sproc}', but it is not configured as store-generated. Either configure it as store-generated or don't configure the parameter as output.
+        /// </summary>
+        public static string StoredProcedureOutputParameterNotGenerated(object? entityType, object? property, object? sproc)
+            => string.Format(
+                GetString("StoredProcedureOutputParameterNotGenerated", nameof(entityType), nameof(property), nameof(sproc)),
+                entityType, property, sproc);
+
+        /// <summary>
         ///     The property '{propertySpecification}' has specific configuration for the stored procedure '{sproc}', but it isn't mapped to a parameter or a result column on that stored procedure. Remove the specific configuration, or map an entity type that contains this property to '{sproc}'.
         /// </summary>
         public static string StoredProcedureOverrideMismatch(object? propertySpecification, object? sproc)

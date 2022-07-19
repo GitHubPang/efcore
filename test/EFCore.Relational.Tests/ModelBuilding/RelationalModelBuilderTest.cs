@@ -1742,7 +1742,11 @@ public class RelationalModelBuilderTest : ModelBuilderTest
         public TestStoredProcedureParameterBuilder HasName(string? name)
             => Wrap(StoredProcedureParameterBuilder.HasName(name));
 
-        //public TestStoredProcedureParameterBuilder<TProperty> IsOutput(bool isOutput = true);
+        public TestStoredProcedureParameterBuilder IsOutput()
+            => Wrap(StoredProcedureParameterBuilder.IsOutput());
+
+        public TestStoredProcedureParameterBuilder IsInputOutput()
+            => Wrap(StoredProcedureParameterBuilder.IsInputOutput());
     }
 
     public class TestStoredProcedureResultColumnBuilder : IInfrastructure<StoredProcedureResultColumnBuilder>
