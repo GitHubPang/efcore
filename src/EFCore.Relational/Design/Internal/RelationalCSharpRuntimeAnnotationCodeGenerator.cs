@@ -360,6 +360,19 @@ public class RelationalCSharpRuntimeAnnotationCodeGenerator : CSharpRuntimeAnnot
 
                 GenerateSimpleAnnotation(RelationalAnnotationNames.Triggers, triggersVariable, parameters);
             }
+
+            if (annotations.TryGetAndRemove(
+                    RelationalAnnotationNames.InsertStoredProcedure,
+                    out StoredProcedure insertStoredProcedure))
+            {
+                var sprocVariable = Dependencies.CSharpHelper.Identifier("insertSproc", parameters.ScopeVariables, capitalize: false);
+                parameters.MainBuilder
+                    .Append("var ").Append(sprocVariable).AppendLine(" = new SortedDictionary<string, ITrigger>();").AppendLine();
+
+                Create(insertStoredProcedure, sprocVariable, parameters);
+
+                GenerateSimpleAnnotation(RelationalAnnotationNames.InsertStoredProcedure, sprocVariable, parameters);
+            }
         }
 
         base.Generate(entityType, parameters);
@@ -616,6 +629,21 @@ public class RelationalCSharpRuntimeAnnotationCodeGenerator : CSharpRuntimeAnnot
             case StoreObjectType.Function:
                 builder
                     .Append("DbFunction(").Append(code.Literal(storeObject.Name)).Append(")");
+                break;
+            case StoreObjectType.InsertStoredProcedure:
+                builder
+                    .Append("InsertStoredProcedure(").Append(code.Literal(storeObject.Name)).Append(")")
+                    .Append(", ").Append(code.Literal(storeObject.Schema)).Append(")");
+                break;
+            case StoreObjectType.DeleteStoredProcedure:
+                builder
+                    .Append("DeleteStoredProcedure(").Append(code.Literal(storeObject.Name)).Append(")")
+                    .Append(", ").Append(code.Literal(storeObject.Schema)).Append(")");
+                break;
+            case StoreObjectType.UpdateStoredProcedure:
+                builder
+                    .Append("UpdateStoredProcedure(").Append(code.Literal(storeObject.Name)).Append(")")
+                    .Append(", ").Append(code.Literal(storeObject.Schema)).Append(")");
                 break;
             default:
                 Check.DebugFail("Unexpected StoreObjectType: " + storeObject.StoreObjectType);

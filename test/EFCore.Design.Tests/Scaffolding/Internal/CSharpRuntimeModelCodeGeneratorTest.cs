@@ -2279,8 +2279,6 @@ namespace TestNamespace
                             .HasForeignKey<DependentBase<byte?>>("PrincipalId")
                             .HasPrincipalKey<PrincipalBase>(e => e.Id);
 
-                        eb.ToTable("PrincipalDerived");
-
                         eb.HasDiscriminator<Enum1>("EnumDiscriminator")
                             .HasValue(Enum1.One)
                             .HasValue<DependentDerived<byte?>>(Enum1.Two)
@@ -2504,7 +2502,7 @@ namespace TestNamespace
             principalBaseId.AddAnnotation(""SqlServer:ValueGenerationStrategy"", SqlServerValueGenerationStrategy.None);
 
             var principalDerivedDependentBasebyteId = runtimeEntityType.AddProperty(
-                ""PrincipalDerived<DependentBase<byte?>>Id"",
+                ""PrincipalDerivedId"",
                 typeof(long?),
                 nullable: true);
             principalDerivedDependentBasebyteId.AddAnnotation(""SqlServer:ValueGenerationStrategy"", SqlServerValueGenerationStrategy.None);
@@ -2708,8 +2706,15 @@ namespace TestNamespace
                         eb.Ignore(e => e.Owned);
 
                         eb.UseTpcMappingStrategy();
+
                         eb.ToTable("PrincipalBase");
                         eb.ToView("PrincipalBaseView");
+
+                        eb.InsertUsingStoredProcedure(s => s.SuppressTransactions()
+                            .HasParameter("PrincipalBaseId")
+                            .HasParameter("PrincipalDerivedId")
+                            .HasParameter(p => p.Id, pb => pb.HasName("BaseId").IsOutput().HasAnnotation("foo", "bar"))
+                            .HasAnnotation("foo", "bar1"));
                     });
 
                 modelBuilder.Entity<PrincipalDerived<DependentBase<byte?>>>(
